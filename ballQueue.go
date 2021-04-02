@@ -6,9 +6,19 @@ import (
 )
 
 type BallQueue struct {
-	Size  int
-	Array []int
-	Name  string
+	Size    int
+	MaxSize int
+	Array   []int
+	Name    string
+}
+
+func NewBallQueue(arr []int, name string, maxSize int) *BallQueue {
+	return &BallQueue{
+		MaxSize: maxSize,
+		Size:    0,
+		Array:   arr,
+		Name:    name,
+	}
 }
 
 func (q *BallQueue) Len() int {
@@ -43,7 +53,8 @@ func (q *BallQueue) Swap(i, j int) {
 }
 
 func (q *BallQueue) InOrder() bool {
-	return sort.IsSorted(q) && q.Size == len(q.Array)
+	return q.Size == q.MaxSize && sort.IsSorted(q)
+	// return sort.IsSorted(q) && q.Size == q.MaxSize
 }
 
 func (q *BallQueue) Append(i int) {
@@ -55,7 +66,7 @@ func (q *BallQueue) Append(i int) {
 func (q *BallQueue) Empty(destQueue *BallQueue) int {
 	for i := len(q.Array) - 2; i >= 0; i-- {
 		destQueue.Append(q.Array[i])
-		q.Array[i] = 0
+		// q.Array[i] = 0
 	}
 	retVal := q.Array[len(q.Array)-1]
 	q.Array[len(q.Array)-1] = 0
@@ -75,5 +86,5 @@ func (q *BallQueue) Pop(i int) int {
 
 func (q *BallQueue) IsFull() bool {
 
-	return q.Size == len(q.Array)
+	return q.Size == q.MaxSize
 }
