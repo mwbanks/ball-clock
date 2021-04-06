@@ -2,16 +2,17 @@ package main
 
 import (
 	"fmt"
-	"sort"
 )
 
+type ballnum = uint8
+
 type ABallQueue struct {
-	Array                     []int
+	Array                     []ballnum
 	Name                      string
 	Start, End, Size, MaxSize int
 }
 
-func NewABallQueue(arr []int, name string, maxSize int) *ABallQueue {
+func NewABallQueue(arr []ballnum, name string, maxSize int) *ABallQueue {
 	return &ABallQueue{
 		Array:   arr,
 		Start:   0,
@@ -24,7 +25,7 @@ func NewABallQueue(arr []int, name string, maxSize int) *ABallQueue {
 
 func (q *ABallQueue) Init(balls int) {
 	for i := 0; i < balls; i++ {
-		q.Array[q.End] = i + 1
+		q.Array[q.End] = ballnum(i) + 1
 		q.End++
 	}
 	if q.End == len(q.Array) {
@@ -48,74 +49,50 @@ func (q *ABallQueue) ValString() string {
 		if i != 0 {
 			retStr += ","
 		}
-		retStr += fmt.Sprintf("%d", val)
+		retStr += fmt.Sprintf("%d", int(val))
 
 	}
-	// for i := q.Start; i < q.Size+q.End; i++ {
-
-	// 	retStr += fmt.Sprintf("%d", val)
-
-	// }
-	// for i, val := range q.Array {
-	// 	if val == 0 {
-	// 		break
-	// 	} else if i != 0 {
-	// 		retStr += ","
-	// 	}
-
-	// }
 	return retStr + "]"
 }
 
 func (q ABallQueue) String() string {
 	return fmt.Sprintf(`{
 	"array": 
-		%s, 
+		%#v, 
 	"Start": %d, 
 	"End": %d, 
 	"Size": %d
 	}`, q.ValString(), q.Start, q.End, q.Size)
 }
 
-func (q *ABallQueue) Less(i, j int) bool {
-	di := i + q.Start
-	if di >= len(q.Array) {
-		di = di - len(q.Array)
-	}
-	dj := j + q.Start
-	if dj >= len(q.Array) {
-		dj = dj - len(q.Array)
-	}
-	return q.Array[di] < q.Array[dj]
-}
-
-func (q *ABallQueue) Swap(i, j int) {
-	q.Array[i], q.Array[j] = q.Array[j], q.Array[i]
-}
-
 func (q *ABallQueue) InOrder() bool {
-	return q.Size == q.MaxSize && sort.IsSorted(q)
+	if q.Size != q.MaxSize {
+		return false
+	}
+	// prevNum := -1
+	var val ballnum
+	for i, j := 0, q.Start; i < q.Size; i++ {
+		val = q.Array[j]
+		j = (j + 1) & 0x7F
+		if val != ballnum(i+1) {
+			return false
+		}
+	}
+	return true
 }
 
-func (q *ABallQueue) Append(i int) {
-	// fmt.Printf("%s %d %v\n", q.Name, q.Size, q.Array)
+func (q *ABallQueue) Append(i ballnum) {
 	q.Array[q.End] = i
-	q.End++
-	if q.End == len(q.Array) {
-		q.End = 0
-	}
+	q.End = (q.End + 1) & 0x7F
 	q.Size++
 }
 
-func (q *ABallQueue) Empty(destQueue *ABallQueue) int {
+func (q *ABallQueue) Empty(destQueue *ABallQueue) ballnum {
 	retVal := q.Array[q.MaxSize-1]
 	for i := q.MaxSize - 2; i != -1; i-- {
 		destQueue.Array[destQueue.End] = q.Array[i]
 		// q.Array[i] = 0
-		destQueue.End++
-		if destQueue.End == len(destQueue.Array) {
-			destQueue.End = 0
-		}
+		destQueue.End = (destQueue.End + 1) & 0x7F
 	}
 	destQueue.Size += (q.MaxSize - 1)
 	q.End = 0
@@ -123,13 +100,83 @@ func (q *ABallQueue) Empty(destQueue *ABallQueue) int {
 	return retVal
 }
 
-// func (q *ABallQueue) RunFiveMinutes() int {
+func (q *ABallQueue) ReverseReturn() ballnum {
+	// if q.Start+5 < len(q.Array) {
+	retVal := q.Array[(q.Start+4)%128]
 
-// }
+	q.Array[q.End],
+		q.Array[(q.End+1)%128],
+		q.Array[(q.End+2)%128],
+		q.Array[(q.End+3)%128] =
+		q.Array[(q.Start+3)%128],
+		q.Array[(q.Start+2)%128],
+		q.Array[(q.Start+1)%128],
+		q.Array[q.Start]
+	q.Start = (q.Start + 5) % 128
+	q.End = (q.End + 4) % 128
+	// if q.End >= len(q.Array) {
+	// 	q.End = q.End - len(q.Array)
+	// }
+	q.Size -= 1
+	return retVal
+	// }
+	// return 0
+}
 
-func (q *ABallQueue) PopFront() int {
+func (q *ABallQueue) FastReverseReturn() ballnum {
+	retVal := q.Array[(q.Start+4)&0x7F]
+
+	q.Array[q.End],
+		q.Array[(q.End+1)&0x7F],
+		q.Array[(q.End+2)&0x7F],
+		q.Array[(q.End+3)&0x7F] =
+		q.Array[(q.Start+3)&0x7F],
+		q.Array[(q.Start+2)&0x7F],
+		q.Array[(q.Start+1)&0x7F],
+		q.Array[q.Start]
+	q.Start = (q.Start + 5) & 0x7F
+	q.End = (q.End + 4) & 0x7F
+	q.Size -= 1
+	return retVal
+}
+
+func (q *ABallQueue) Pop5(arr []ballnum) {
+	if q.Start+len(arr) < len(q.Array) {
+		copy(arr[:], q.Array[q.Start:q.Start+5])
+		q.Start += 5
+	} else {
+		for i := 0; i < 5; i++ {
+			arr[i] = q.Array[q.Start]
+			q.Start++
+			if q.Start == len(q.Array) {
+				q.Start = 0
+			}
+		}
+	}
+	q.Size -= 5
+}
+
+func (q *ABallQueue) AppendInReverse(arr []ballnum) {
+	arr[0], arr[1], arr[2], arr[3] = arr[3], arr[2], arr[1], arr[0]
+	if q.End+4 < len(q.Array) {
+		copy(q.Array, arr[:])
+		q.End += 4
+	} else {
+		for i := 0; i < 4; i++ {
+			q.Array[q.End] = arr[i]
+			q.End++
+			if q.End == len(q.Array) {
+				q.End = 0
+			}
+		}
+	}
+	q.Size += 4
+	// fmt.Printf("%#v\n", q.Array)
+}
+
+func (q *ABallQueue) PopFront() ballnum {
 	retVal := q.Array[q.Start]
-	q.Start++
+	q.Start += 1
 	if q.Start == len(q.Array) {
 		q.Start = 0
 	}

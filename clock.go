@@ -34,7 +34,7 @@ func (c *AClock) Init(balls int) {
 
 func (c *Clock) CycleDays() int {
 	start := time.Now()
-	fmt.Printf("Prerun Main: %#v\n", c.Main)
+	fmt.Printf("Prerun Main: %s\n", c.Main)
 	c.runMinute()
 	for !c.Main.InOrder() {
 		c.runMinute()
@@ -89,29 +89,45 @@ func (c Clock) String() string {
 }
 
 func (c *AClock) CycleDays() int {
+	startup := true
 	start := time.Now()
-	fmt.Printf("Prerun Main: %#v\n", c.Main)
-	c.runMinute()
-	for !c.Main.InOrder() {
-		c.runMinute()
+	for !c.Main.InOrder() || startup {
+		c.run5Min()
+		startup = false
 	}
 	end := time.Now()
+	elapsed := end.Sub(start).Nanoseconds() / 1000000
 	fmt.Printf("Main: %#v\n", c.Main)
-	// fmt.Printf("Min: %#v\n", c.Min)
+	fmt.Printf("Min: %#v\n", c.Min)
 	fmt.Printf("FiveMin: %#v\n", c.FiveMin)
 	fmt.Printf("Hour: %#v\n", c.Hour)
 	fmt.Printf("%d balls cycle after %d days.\n", c.Main.MaxSize, c.HalfDay/2)
-	elapsed := end.Sub(start).Nanoseconds() / 1000000
-	// elapsed := (end.UnixNano() - start.UnixNano()) / 1000
 	fmt.Printf("Completed in %d milliseconds (%f seconds)\n", elapsed, float64(elapsed)/1000)
 	return c.HalfDay / 2
 }
 
 func (c *AClock) ClockState(minutes int) string {
 	for i := 0; i < minutes; i++ {
-		c.runMinute()
+		c.run5Min()
 	}
 	return fmt.Sprintf("%s\n", c)
+}
+
+func (c *AClock) run5Min() {
+	val := c.Main.FastReverseReturn()
+	c.FiveMin.Append(val)
+	if c.FiveMin.IsFull() {
+		lastVal := c.FiveMin.Empty(c.Main)
+
+		c.Hour.Append(lastVal)
+		if c.Hour.IsFull() {
+			lastVal = c.Hour.Empty(c.Main)
+
+			c.Main.Append(lastVal)
+			c.HalfDay++
+		}
+	}
+
 }
 
 func (c *AClock) runMinute() {
@@ -137,17 +153,17 @@ func (c *AClock) runMinute() {
 }
 
 func (c AClock) String() string {
-	return fmt.Sprintf(`{"Min": %s, 
+	return fmt.Sprintf(`{
 	"FiveMin": %s, 
 	"Hour": %s, 
 	"Main": %s
-}`, c.Min, c.FiveMin, c.Hour, c.Main)
+}`, c.FiveMin, c.Hour, c.Main)
 }
 
 func CreateClock(balls int, clockType int) AC {
-	arr := [154]int{}
 	var c AC
 	if clockType == 0 {
+		arr := [155]int{}
 		c = &Clock{
 			Min:     NewBallQueue(arr[:5], "Min", 5),
 			FiveMin: NewBallQueue(arr[5:5+12], "FiveMin", 12),
@@ -157,6 +173,8 @@ func CreateClock(balls int, clockType int) AC {
 		}
 
 	} else {
+		arr := [157]ballnum{}
+		// arr := make([]ballnum, 29+balls)
 		c = &AClock{
 			Min:     NewABallQueue(arr[:5], "Min", 5),
 			FiveMin: NewABallQueue(arr[5:5+12], "FiveMin", 12),
