@@ -12,7 +12,7 @@ import (
 type AC interface {
 	ClockState(int) string
 	CycleDays() int
-	Init(int)
+	Init(int8)
 }
 
 func main() {

@@ -21,15 +21,15 @@ type AClock struct {
 	Main    *ABallQueue
 }
 
-func (c *Clock) Init(balls int) {
-	for i := 0; i < balls; i++ {
+func (c *Clock) Init(balls int8) {
+	for i := 0; i < int(balls); i++ {
 		c.Main.Append(i + 1)
 	}
 	// c.Main.Init(balls)
 }
 
-func (c *AClock) Init(balls int) {
-	c.Main.Init(balls)
+func (c *AClock) Init(balls int8) {
+	c.Main.Init(sizenum(balls))
 }
 
 func (c *Clock) CycleDays() int {
@@ -114,7 +114,8 @@ func (c *AClock) ClockState(minutes int) string {
 }
 
 func (c *AClock) run5Min() {
-	val := c.Main.FastReverseReturn()
+	var val ballnum
+	c.Main.FastReverseReturn(&val)
 	c.FiveMin.Append(val)
 	if c.FiveMin.IsFull() {
 		lastVal := c.FiveMin.Empty(c.Main)
@@ -130,27 +131,27 @@ func (c *AClock) run5Min() {
 
 }
 
-func (c *AClock) runMinute() {
-	nextMin := c.Main.PopFront()
-	c.Min.Append(nextMin)
-	if c.Min.IsFull() {
-		lastVal := c.Min.Empty(c.Main)
+// func (c *AClock) runMinute() {
+// 	nextMin := c.Main.PopFront()
+// 	c.Min.Append(nextMin)
+// 	if c.Min.IsFull() {
+// 		lastVal := c.Min.Empty(c.Main)
 
-		c.FiveMin.Append(lastVal)
-		if c.FiveMin.IsFull() {
-			lastVal := c.FiveMin.Empty(c.Main)
+// 		c.FiveMin.Append(lastVal)
+// 		if c.FiveMin.IsFull() {
+// 			lastVal := c.FiveMin.Empty(c.Main)
 
-			c.Hour.Append(lastVal)
-			if c.Hour.IsFull() {
-				lastVal = c.Hour.Empty(c.Main)
+// 			c.Hour.Append(lastVal)
+// 			if c.Hour.IsFull() {
+// 				lastVal = c.Hour.Empty(c.Main)
 
-				c.Main.Append(lastVal)
-				c.HalfDay++
-			}
-		}
-	}
+// 				c.Main.Append(lastVal)
+// 				c.HalfDay++
+// 			}
+// 		}
+// 	}
 
-}
+// }
 
 func (c AClock) String() string {
 	return fmt.Sprintf(`{
@@ -173,17 +174,17 @@ func CreateClock(balls int, clockType int) AC {
 		}
 
 	} else {
-		arr := [157]ballnum{}
+		arr := [285]ballnum{}
 		// arr := make([]ballnum, 29+balls)
 		c = &AClock{
 			Min:     NewABallQueue(arr[:5], "Min", 5),
 			FiveMin: NewABallQueue(arr[5:5+12], "FiveMin", 12),
 			Hour:    NewABallQueue(arr[5+12:5+12+12], "Hour", 12),
 			HalfDay: 0,
-			Main:    NewABallQueue(arr[5+12+12:], "Main", balls),
+			Main:    NewABallQueue(arr[5+12+12:], "Main", sizenum(balls)),
 		}
 
 	}
-	c.Init(balls)
+	c.Init(int8(balls))
 	return c
 }
