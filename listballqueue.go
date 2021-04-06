@@ -37,18 +37,7 @@ func (q *ABallQueue) Init(balls uint8) {
 
 func (q *ABallQueue) ValString() string {
 	retStr := "["
-	// l := int8(len(q.Array))
-	// for i, j := int8(0), q.Start; i < q.Size; i++ {
 	for i := 0; i < len(q.Array); i++ {
-		// val := q.Array[j]
-		// j++
-		// if j == l {
-		// 	j = 0
-		// }
-		// if i != 0 {
-		// 	retStr += ","
-		// }
-		// retStr += fmt.Sprintf("%d", int(val))
 		retStr += fmt.Sprintf("%d, ", int(q.Array[i]))
 
 	}
@@ -87,22 +76,19 @@ func (q *ABallQueue) Append(i ballnum) {
 	q.Size++
 }
 
-func (q *ABallQueue) Empty(destQueue *ABallQueue) ballnum {
-	retVal := q.Array[q.MaxSize-1]
-	for i := int(q.MaxSize - 2); i != -1; i-- {
+func (q *ABallQueue) Empty(destQueue *ABallQueue) (retVal ballnum) {
+	retVal = q.Array[q.MaxSize-1]
+	for i := int(10); i != -1; i, destQueue.End = i-1, destQueue.End+1 {
 		destQueue.Array[destQueue.End] = q.Array[i]
-		// q.Array[i] = 0
-		// destQueue.End = (destQueue.End + 1) & 0x7F
-		destQueue.End++
 	}
-	destQueue.Size += (q.MaxSize - 1)
+	destQueue.Size += 11
 	q.End = 0
 	q.Size = 0
-	return retVal
+	return
 }
 
-func (q *ABallQueue) FastReverseReturn(val *ballnum) {
-	*val = q.Array[q.Start+4]
+func (q *ABallQueue) FastReverseReturn() (retVal ballnum) {
+	retVal = q.Array[q.Start+4]
 
 	q.Array[q.End],
 		q.Array[q.End+1],
@@ -115,6 +101,7 @@ func (q *ABallQueue) FastReverseReturn(val *ballnum) {
 	q.Start += 5
 	q.End += 4
 	q.Size -= 1
+	return
 }
 
 func (q *ABallQueue) IsFull() bool {

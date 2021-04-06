@@ -92,15 +92,17 @@ func (c *AClock) CycleDays() int {
 	startup := true
 	start := time.Now()
 	for !c.Main.InOrder() || startup {
-		c.run5Min()
+		// c.run5Min()
+		// c.runHour()
+		c.runHalfDay()
+		c.runHalfDay()
 		startup = false
 	}
-	end := time.Now()
-	elapsed := end.Sub(start).Nanoseconds() / 1000000
-	fmt.Printf("Main: %#v\n", c.Main)
-	fmt.Printf("Min: %#v\n", c.Min)
-	fmt.Printf("FiveMin: %#v\n", c.FiveMin)
-	fmt.Printf("Hour: %#v\n", c.Hour)
+	elapsed := time.Now().Sub(start).Nanoseconds() / 1000000
+	// fmt.Printf("Main: %#v\n", c.Main)
+	// fmt.Printf("Min: %#v\n", c.Min)
+	// fmt.Printf("FiveMin: %#v\n", c.FiveMin)
+	// fmt.Printf("Hour: %#v\n", c.Hour)
 	fmt.Printf("%d balls cycle after %d days.\n", c.Main.MaxSize, c.HalfDay/2)
 	fmt.Printf("Completed in %d milliseconds (%f seconds)\n", elapsed, float64(elapsed)/1000)
 	return c.HalfDay / 2
@@ -113,9 +115,46 @@ func (c *AClock) ClockState(minutes int) string {
 	return fmt.Sprintf("%s\n", c)
 }
 
+func (c *AClock) runHalfDay() {
+	// var val ballnum
+	var lastVal ballnum
+	for i := 0; i < 12; i++ {
+		for j := 0; j < 12; j++ {
+			val := c.Main.FastReverseReturn()
+			c.FiveMin.Append(val)
+		}
+		lastVal = c.FiveMin.Empty(c.Main)
+
+		c.Hour.Append(lastVal)
+	}
+	lastVal = c.Hour.Empty(c.Main)
+
+	c.Main.Append(lastVal)
+	c.HalfDay++
+}
+
+func (c *AClock) runHour() {
+	// var val ballnum
+	for i := 0; i < 12; i++ {
+		val := c.Main.FastReverseReturn()
+		c.FiveMin.Append(val)
+	}
+	if c.FiveMin.IsFull() {
+		lastVal := c.FiveMin.Empty(c.Main)
+
+		c.Hour.Append(lastVal)
+		if c.Hour.IsFull() {
+			lastVal = c.Hour.Empty(c.Main)
+
+			c.Main.Append(lastVal)
+			c.HalfDay++
+		}
+	}
+}
+
 func (c *AClock) run5Min() {
-	var val ballnum
-	c.Main.FastReverseReturn(&val)
+	// var val ballnum
+	val := c.Main.FastReverseReturn()
 	c.FiveMin.Append(val)
 	if c.FiveMin.IsFull() {
 		lastVal := c.FiveMin.Empty(c.Main)
