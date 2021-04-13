@@ -10,16 +10,15 @@ type sizenum = uint8
 const sizemax int16 = 0xFF
 
 type ABallQueue struct {
-	Array                     []ballnum
-	Name                      string
-	Start, End, Size, MaxSize sizenum
+	Array                []ballnum
+	Name                 string
+	Start, Size, MaxSize sizenum
 }
 
 func NewABallQueue(arr []ballnum, name string, maxSize sizenum) *ABallQueue {
 	return &ABallQueue{
 		Array:   arr,
 		Start:   0,
-		End:     0,
 		Size:    0,
 		MaxSize: maxSize,
 		Name:    name,
@@ -28,11 +27,10 @@ func NewABallQueue(arr []ballnum, name string, maxSize sizenum) *ABallQueue {
 
 func (q *ABallQueue) Init(balls uint8) {
 	for i := sizenum(0); i < balls; i++ {
-		q.Array[q.End] = ballnum(i) + 1
+		q.Array[q.Size] = ballnum(i) + 1
 		// q.End = (q.End + 1) & 0x7F
-		q.End++
+		q.Size++
 	}
-	q.Size = balls
 }
 
 func (q *ABallQueue) ValString() string {
@@ -49,9 +47,8 @@ func (q ABallQueue) String() string {
 	"array": 
 		%#v, 
 	"Start": %d, 
-	"End": %d, 
 	"Size": %d
-	}`, q.ValString(), q.Start, q.End, q.Size)
+	}`, q.ValString(), q.Start, q.Size)
 }
 
 func (q *ABallQueue) InOrder() bool {
@@ -71,24 +68,23 @@ func (q *ABallQueue) InOrder() bool {
 }
 
 func (q *ABallQueue) Append(i ballnum) {
-	q.Array[q.End] = i
-	q.End++
+	q.Array[q.Start+q.Size] = i
 	q.Size++
 }
 
 func (q *ABallQueue) FastReverseReturn() (retVal ballnum) {
 	retVal = q.Array[q.Start+4]
+	end := q.Start + q.Size
 
-	q.Array[q.End],
-		q.Array[q.End+1],
-		q.Array[q.End+2],
-		q.Array[q.End+3] =
+	q.Array[end],
+		q.Array[end+1],
+		q.Array[end+2],
+		q.Array[end+3] =
 		q.Array[q.Start+3],
 		q.Array[q.Start+2],
 		q.Array[q.Start+1],
 		q.Array[q.Start]
 	q.Start += 5
-	q.End += 4
 	q.Size -= 1
 	return
 }

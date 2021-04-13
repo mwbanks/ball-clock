@@ -229,7 +229,7 @@ func CreateClock(balls int, clockType int) AC {
 		}
 
 	} else {
-		arr := [280]ballnum{}
+		arr := [288]ballnum{}
 		// arr := make([]ballnum, 29+balls)
 		c = &AClock{
 			FiveMin: New12Queue(arr[:12], "FiveMin"),
