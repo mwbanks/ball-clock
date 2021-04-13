@@ -14,9 +14,8 @@ type Clock struct {
 }
 
 type AClock struct {
-	Min     *ABallQueue
-	FiveMin *ABallQueue
-	Hour    *ABallQueue
+	FiveMin *A12Queue
+	Hour    *A12Queue
 	HalfDay int
 	Main    *ABallQueue
 }
@@ -95,10 +94,10 @@ func (c *AClock) CycleDays() int {
 		// c.run5Min()
 		// c.runHour()
 		c.runHalfDay()
-		c.runHalfDay()
+		// c.runHalfDay()
 		startup = false
 	}
-	elapsed := time.Now().Sub(start).Nanoseconds() / 1000000
+	elapsed := time.Since(start).Nanoseconds() / 1000000
 	// fmt.Printf("Main: %#v\n", c.Main)
 	// fmt.Printf("Min: %#v\n", c.Min)
 	// fmt.Printf("FiveMin: %#v\n", c.FiveMin)
@@ -118,6 +117,20 @@ func (c *AClock) ClockState(minutes int) string {
 func (c *AClock) runHalfDay() {
 	// var val ballnum
 	var lastVal ballnum
+	for i := 0; i < 12; i++ {
+		for j := 0; j < 12; j++ {
+			val := c.Main.FastReverseReturn()
+			c.FiveMin.Append(val)
+		}
+		lastVal = c.FiveMin.Empty(c.Main)
+
+		c.Hour.Append(lastVal)
+	}
+	lastVal = c.Hour.Empty(c.Main)
+
+	c.Main.Append(lastVal)
+	c.HalfDay++
+
 	for i := 0; i < 12; i++ {
 		for j := 0; j < 12; j++ {
 			val := c.Main.FastReverseReturn()
@@ -155,13 +168,16 @@ func (c *AClock) runHour() {
 func (c *AClock) run5Min() {
 	// var val ballnum
 	val := c.Main.FastReverseReturn()
+	fmt.Println("val:", val)
 	c.FiveMin.Append(val)
 	if c.FiveMin.IsFull() {
 		lastVal := c.FiveMin.Empty(c.Main)
+		fmt.Println("lastVal:", lastVal)
 
 		c.Hour.Append(lastVal)
 		if c.Hour.IsFull() {
 			lastVal = c.Hour.Empty(c.Main)
+			fmt.Println("lastVal:", lastVal)
 
 			c.Main.Append(lastVal)
 			c.HalfDay++
@@ -213,14 +229,13 @@ func CreateClock(balls int, clockType int) AC {
 		}
 
 	} else {
-		arr := [285]ballnum{}
+		arr := [280]ballnum{}
 		// arr := make([]ballnum, 29+balls)
 		c = &AClock{
-			Min:     NewABallQueue(arr[:5], "Min", 5),
-			FiveMin: NewABallQueue(arr[5:5+12], "FiveMin", 12),
-			Hour:    NewABallQueue(arr[5+12:5+12+12], "Hour", 12),
+			FiveMin: New12Queue(arr[:12], "FiveMin"),
+			Hour:    New12Queue(arr[12:12+12], "Hour"),
 			HalfDay: 0,
-			Main:    NewABallQueue(arr[5+12+12:], "Main", sizenum(balls)),
+			Main:    NewABallQueue(arr[12+12:], "Main", sizenum(balls)),
 		}
 
 	}

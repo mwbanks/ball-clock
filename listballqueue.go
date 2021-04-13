@@ -76,17 +76,6 @@ func (q *ABallQueue) Append(i ballnum) {
 	q.Size++
 }
 
-func (q *ABallQueue) Empty(destQueue *ABallQueue) (retVal ballnum) {
-	retVal = q.Array[q.MaxSize-1]
-	for i := int(10); i != -1; i, destQueue.End = i-1, destQueue.End+1 {
-		destQueue.Array[destQueue.End] = q.Array[i]
-	}
-	destQueue.Size += 11
-	q.End = 0
-	q.Size = 0
-	return
-}
-
 func (q *ABallQueue) FastReverseReturn() (retVal ballnum) {
 	retVal = q.Array[q.Start+4]
 
