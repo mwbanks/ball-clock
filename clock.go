@@ -116,34 +116,26 @@ func (c *AClock) ClockState(minutes int) string {
 
 func (c *AClock) runHalfDay() {
 	// var val ballnum
-	var lastVal ballnum
-	for i := 0; i < 12; i++ {
-		for j := 0; j < 12; j++ {
-			val := c.Main.FastReverseReturn()
-			c.FiveMin.Append(val)
+	i, j := 0, 0
+	for ; i < 12; i++ {
+		for j = 0; j < 12; j++ {
+			c.FiveMin.Append(c.Main.FastReverseReturn())
 		}
-		lastVal = c.FiveMin.Empty(c.Main)
-
-		c.Hour.Append(lastVal)
+		c.Hour.Append(c.FiveMin.Empty(c.Main))
 	}
-	lastVal = c.Hour.Empty(c.Main)
-
-	c.Main.Append(lastVal)
+	c.Main.Append(c.Hour.Empty(c.Main))
 	c.HalfDay++
 
-	for i := 0; i < 12; i++ {
-		for j := 0; j < 12; j++ {
-			val := c.Main.FastReverseReturn()
-			c.FiveMin.Append(val)
+	for i = 0; i < 12; i++ {
+		for j = 0; j < 12; j++ {
+			c.FiveMin.Append(c.Main.FastReverseReturn())
 		}
-		lastVal = c.FiveMin.Empty(c.Main)
 
-		c.Hour.Append(lastVal)
+		c.Hour.Append(c.FiveMin.Empty(c.Main))
 	}
-	lastVal = c.Hour.Empty(c.Main)
-
-	c.Main.Append(lastVal)
+	c.Main.Append(c.Hour.Empty(c.Main))
 	c.HalfDay++
+
 }
 
 func (c *AClock) runHour() {
